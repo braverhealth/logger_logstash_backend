@@ -69,13 +69,16 @@ defmodule LoggerLogstashBackend do
     {:ok, ts} = NaiveDateTime.new(
       year, month, day, hour, minute, second, (milliseconds * 1000)
     )
-    ts = Timex.to_datetime ts, Timezone.local
-    {:ok, json} = JSX.encode %{
+    date = ts
+      |> Timex.to_datetime("UTC") 
+      |> Timex.Timezone.convert("America/Montreal")
+      
+    {:ok, json} = JSX.encode(%{
       type: type,
-      "@timestamp": Timex.format!(ts, "{ISO:Extended}"),
+      "@timestamp": Timex.format!(date, "{ISO:Extended}"),
       message: to_string(msg),
       fields: fields
-    }
+    })
     :gen_udp.send socket, host, port, to_charlist(json)
   end
 
